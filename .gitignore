@@ -2,10 +2,9 @@
 *.zip
 .idea
 .terraform
-main.tf
-.terraform/
 terraform.tfstate
 terraform.tfstate.backup
 terraform.tfvarsf
 terraform.tfstate.*.backup
 tfplan
+.terraform.lock.hcl
