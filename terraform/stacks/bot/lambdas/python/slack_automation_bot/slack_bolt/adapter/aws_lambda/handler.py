@@ -52,10 +52,9 @@ class SlackRequestHandler:
                 )
                 if is_callback:
                     bolt_resp = oauth_flow.handle_callback(bolt_req)
-                    return to_aws_response(bolt_resp)
                 else:
                     bolt_resp = oauth_flow.handle_installation(bolt_req)
-                    return to_aws_response(bolt_resp)
+                return to_aws_response(bolt_resp)
         elif method == "POST":
             bolt_req = to_bolt_request(event)
             # https://docs.aws.amazon.com/lambda/latest/dg/python-context.html

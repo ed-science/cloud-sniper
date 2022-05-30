@@ -30,9 +30,9 @@ def _build_request_headers(
     if default_headers is None or "User-Agent" not in default_headers:
         request_headers["User-Agent"] = get_user_agent()
     if default_headers is not None:
-        request_headers.update(default_headers)
+        request_headers |= default_headers
     if additional_headers is not None:
-        request_headers.update(additional_headers)
+        request_headers |= additional_headers
     return request_headers
 
 

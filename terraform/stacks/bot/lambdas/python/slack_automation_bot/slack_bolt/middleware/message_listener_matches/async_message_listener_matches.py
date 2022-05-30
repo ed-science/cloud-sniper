@@ -18,8 +18,7 @@ class AsyncMessageListenerMatches(AsyncMiddleware):
         resp: BoltResponse,
         next: Callable[[], Awaitable[BoltResponse]],
     ) -> BoltResponse:
-        text = req.body.get("event", {}).get("text", "")
-        if text:
+        if text := req.body.get("event", {}).get("text", ""):
             m = re.search(self.keyword, text)
             if m is not None:
                 req.context["matches"] = m.groups()  # tuple

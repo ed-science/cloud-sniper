@@ -68,5 +68,4 @@ class SignatureVerifier:
         format_req = str.encode(f"v0:{timestamp}:{body}")
         encoded_secret = str.encode(self.signing_secret)
         request_hash = hmac.new(encoded_secret, format_req, hashlib.sha256).hexdigest()
-        calculated_signature = f"v0={request_hash}"
-        return calculated_signature
+        return f"v0={request_hash}"

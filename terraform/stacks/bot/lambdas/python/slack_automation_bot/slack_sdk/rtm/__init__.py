@@ -311,15 +311,13 @@ class RTMClient(object):  # skipcq: PYL-R0205
 
         cb_name = callback.__name__ if hasattr(callback, "__name__") else callback
         if not callable(callback):
-            msg = "The specified callback '{}' is not callable.".format(cb_name)
+            msg = f"The specified callback '{cb_name}' is not callable."
             raise client_err.SlackClientError(msg)
         callback_params = inspect.signature(callback).parameters.values()
         if not any(
             param for param in callback_params if param.kind == param.VAR_KEYWORD
         ):
-            msg = "The callback '{}' must accept keyword arguments (**kwargs).".format(
-                cb_name
-            )
+            msg = f"The callback '{cb_name}' must accept keyword arguments (**kwargs)."
             raise client_err.SlackClientError(msg)
 
     def _next_msg_id(self):
@@ -546,15 +544,16 @@ class RTMClient(object):  # skipcq: PYL-R0205
         self._logger.debug("Retrieving websocket info.")
         use_rtm_start = self.connect_method in ["rtm.start", "rtm_start"]
         if self.run_async:
-            if use_rtm_start:
-                resp = await self._web_client.rtm_start()
-            else:
-                resp = await self._web_client.rtm_connect()
+            resp = (
+                await self._web_client.rtm_start()
+                if use_rtm_start
+                else await self._web_client.rtm_connect()
+            )
+
+        elif use_rtm_start:
+            resp = self._web_client.rtm_start()
         else:
-            if use_rtm_start:
-                resp = self._web_client.rtm_start()
-            else:
-                resp = self._web_client.rtm_connect()
+            resp = self._web_client.rtm_connect()
 
         url = resp.get("url")
         if url is None:

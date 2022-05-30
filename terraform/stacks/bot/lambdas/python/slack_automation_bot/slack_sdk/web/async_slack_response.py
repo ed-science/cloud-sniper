@@ -142,25 +142,24 @@ class AsyncSlackResponse:
         self._iteration += 1
         if self._iteration == 1:
             return self
-        if _next_cursor_is_present(self.data):  # skipcq: PYL-R1705
-            params = self.req_args.get("params", {})
-            if params is None:
-                params = {}
-            params.update({"cursor": self.data["response_metadata"]["next_cursor"]})
-            self.req_args.update({"params": params})
-
-            response = await self._client._request(  # skipcq: PYL-W0212
-                http_verb=self.http_verb,
-                api_url=self.api_url,
-                req_args=self.req_args,
-            )
-
-            self.data = response["data"]
-            self.headers = response["headers"]
-            self.status_code = response["status_code"]
-            return self.validate()
-        else:
+        if not _next_cursor_is_present(self.data):
             raise StopAsyncIteration
+        params = self.req_args.get("params", {})
+        if params is None:
+            params = {}
+        params.update({"cursor": self.data["response_metadata"]["next_cursor"]})
+        self.req_args.update({"params": params})
+
+        response = await self._client._request(  # skipcq: PYL-W0212
+            http_verb=self.http_verb,
+            api_url=self.api_url,
+            req_args=self.req_args,
+        )
+
+        self.data = response["data"]
+        self.headers = response["headers"]
+        self.status_code = response["status_code"]
+        return self.validate()
 
     def get(self, key, default=None):
         """Retrieves any key from the response data.

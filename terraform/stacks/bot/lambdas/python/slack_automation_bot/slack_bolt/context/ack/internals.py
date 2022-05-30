@@ -29,12 +29,10 @@ def _set_response(
         if response_type:
             body["response_type"] = response_type
         if attachments and len(attachments) > 0:
-            body.update(
-                {"text": text, "attachments": convert_to_dict_list(attachments)}
-            )
+            body |= {"text": text, "attachments": convert_to_dict_list(attachments)}
             self.response = BoltResponse(status=200, body=body)
         elif blocks and len(blocks) > 0:
-            body.update({"text": text, "blocks": convert_to_dict_list(blocks)})
+            body |= {"text": text, "blocks": convert_to_dict_list(blocks)}
             self.response = BoltResponse(status=200, body=body)
         elif options and len(options) > 0:
             body = {"options": convert_to_dict_list(options)}
@@ -54,9 +52,7 @@ def _set_response(
                         },
                     )
                 else:
-                    raise ValueError(
-                        f"errors field is required for response_action: errors"
-                    )
+                    raise ValueError("errors field is required for response_action: errors")
             else:
                 body = {"response_action": response_action}
                 if view:
@@ -66,11 +62,10 @@ def _set_response(
             # dialogs: errors without response_action
             body = {"errors": convert_to_dict_list(errors)}
             self.response = BoltResponse(status=200, body=body)
+        elif len(body) == 1 and "text" in body:
+            self.response = BoltResponse(status=200, body=body["text"])
         else:
-            if len(body) == 1 and "text" in body:
-                self.response = BoltResponse(status=200, body=body["text"])
-            else:
-                self.response = BoltResponse(status=200, body=body)
+            self.response = BoltResponse(status=200, body=body)
         return self.response
     elif isinstance(text_or_whole_response, dict):
         body = text_or_whole_response

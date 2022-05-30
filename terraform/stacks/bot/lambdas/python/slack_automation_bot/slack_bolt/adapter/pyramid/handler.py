@@ -14,20 +14,17 @@ def to_bolt_request(request: Request) -> BoltRequest:
             body = request.body.decode("utf-8")
         else:
             body = request.body
-    bolt_req = BoltRequest(
+    return BoltRequest(
         body=body,
         query=request.query_string,
         headers=request.headers,
     )
-    return bolt_req
 
 
 def to_pyramid_response(bolt_resp: BoltResponse) -> Response:
     headers: List[Tuple[str, str]] = []
     for k, vs in bolt_resp.headers.items():
-        for v in vs:
-            headers.append((k, v))
-
+        headers.extend((k, v) for v in vs)
     return Response(
         status=bolt_resp.status,
         body=bolt_resp.body or "",

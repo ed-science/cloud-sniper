@@ -28,7 +28,7 @@ def _parse_connect_response(sock) -> (Optional[int], str):
             if c == b"\n":
                 break
         line = b"".join(line).decode("utf-8").strip()
-        if line is None or len(line) == 0:
+        if line is None or not line:
             break
         lines.append(line)
         if not status:
@@ -72,10 +72,8 @@ def _establish_new_socket_connection(
             auth = b64encode(raw_value.encode("utf-8")).decode("ascii")
             message.append(f"Proxy-Authorization: Basic {auth}")
         if proxy_headers is not None:
-            for k, v in proxy_headers.items():
-                message.append(f"{k}: {v}")
-        message.append("")
-        message.append("")
+            message.extend(f"{k}: {v}" for k, v in proxy_headers.items())
+        message.extend(("", ""))
         req: str = "\r\n".join([line.lstrip() for line in message])
         if trace_enabled:
             logger.debug(f"Proxy connect request (session id: {session_id}):\n{req}")
@@ -165,7 +163,7 @@ def _generate_sec_websocket_key() -> str:
 
 
 def _validate_sec_websocket_accept(sec_websocket_key: str, headers: dict) -> bool:
-    v = (sec_websocket_key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode("utf-8")
+    v = f"{sec_websocket_key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11".encode("utf-8")
     expected = encodebytes(hashlib.sha1(v).digest()).decode("utf-8").strip()
     actual = headers.get("sec-websocket-accept").strip()
     return compare_digest(expected, actual)
@@ -212,9 +210,8 @@ def _receive_messages(
         with sock_receive_lock:
             try:
                 received_bytes = sock.recv(size)
-                if all_message_trace_enabled:
-                    if len(received_bytes) > 0:
-                        logger.debug(f"Received bytes: {received_bytes}")
+                if all_message_trace_enabled and len(received_bytes) > 0:
+                    logger.debug(f"Received bytes: {received_bytes}")
                 return received_bytes
             except OSError as e:
                 if e.errno == errno.EBADF:
@@ -299,11 +296,10 @@ def _fetch_messages(
             masked=b2 & 0b10000000,
             length=current_data_length,
         )
-        if current_header.masked > 0:
-            if current_mask_key is None:
-                idx1, idx2 = idx_after_length_part, idx_after_length_part + 4
-                current_mask_key = remaining_bytes[idx1:idx2]
-                idx_after_length_part += 4
+        if current_header.masked > 0 and current_mask_key is None:
+            idx1, idx2 = idx_after_length_part, idx_after_length_part + 4
+            current_mask_key = remaining_bytes[idx1:idx2]
+            idx_after_length_part += 4
 
         start, end = idx_after_length_part, idx_after_length_part + current_data_length
         data_to_append = remaining_bytes[start:end]
@@ -313,9 +309,7 @@ def _fetch_messages(
             for i in range(data_to_append):
                 mask = current_mask_key[i % 4]
                 data_to_append[i] ^= mask
-            current_data += data_to_append
-        else:
-            current_data += data_to_append
+        current_data += data_to_append
         if len(current_data) == current_data_length:
             _append_message(messages, current_header, current_data)
             remaining_bytes = remaining_bytes[end:]

@@ -48,7 +48,7 @@ def message_to_slack(event):
         if 'button' in event:
             button = (event['button'])
             button_id = (event['button_id'])
-            if "True" == button:
+            if button == "True":
                 blocks = [
                     {
                         "type": "section",
@@ -113,6 +113,6 @@ def message_to_slack(event):
                                            blocks=blocks,
                                            link_names=True
                                            )
-        log.info("Message send: " + str(response))
+        log.info(f"Message send: {str(response)}")
     except Exception as e:
-        log.error("Message could not be send to Slack: " + str(e))
+        log.error(f"Message could not be send to Slack: {str(e)}")

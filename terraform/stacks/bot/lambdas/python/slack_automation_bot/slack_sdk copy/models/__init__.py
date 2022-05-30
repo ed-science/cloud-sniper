@@ -37,7 +37,7 @@ def extract_json(
 def show_unknown_key_warning(name: Union[str, object], others: dict):
     if "type" in others:
         others.pop("type")
-    if len(others) > 0:
+    if others:
         keys = ", ".join(others.keys())
         logger = logging.getLogger(__name__)
         if isinstance(name, object):

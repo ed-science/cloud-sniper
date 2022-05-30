@@ -163,7 +163,7 @@ class BaseClient:
 
         body_params = {}
         if params:
-            body_params.update(params)
+            body_params |= params
         if data:
             body_params.update(data)
 
@@ -336,8 +336,7 @@ class BaseClient:
                 readable = getattr(value, "readable", None)
                 if readable and value.readable():
                     filename = "Uploaded file"
-                    name_attr = getattr(value, "name", None)
-                    if name_attr:
+                    if name_attr := getattr(value, "name", None):
                         filename = (
                             name_attr.decode("utf-8")
                             if isinstance(name_attr, bytes)
@@ -432,13 +431,13 @@ class BaseClient:
         self, token: str, has_json: bool, has_files: bool, additional_headers: dict
     ) -> Dict[str, str]:
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        headers.update(self.headers)
+        headers |= self.headers
         if token:
-            headers.update({"Authorization": "Bearer {}".format(token)})
+            headers["Authorization"] = f"Bearer {token}"
         if additional_headers:
             headers.update(additional_headers)
         if has_json:
-            headers.update({"Content-Type": "application/json;charset=utf-8"})
+            headers["Content-Type"] = "application/json;charset=utf-8"
         if has_files:
             # will be set afterwards
             headers.pop("Content-Type", None)

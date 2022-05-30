@@ -13,10 +13,7 @@ class Link(BaseObject):
         self.text = text
 
     def __str__(self):
-        if self.text:
-            separator = "|"
-        else:
-            separator = ""
+        separator = "|" if self.text else ""
         return f"<{self.url}{separator}{self.text}>"
 
 
@@ -32,14 +29,8 @@ class DateLink(Link):
         """Text containing a date or time should display that date in the local timezone of the person seeing the text.
         https://api.slack.com/reference/surfaces/formatting#date-formatting
         """
-        if isinstance(date, datetime):
-            epoch = int(date.timestamp())
-        else:
-            epoch = date
-        if link is not None:
-            link = f"^{link}"
-        else:
-            link = ""
+        epoch = int(date.timestamp()) if isinstance(date, datetime) else date
+        link = f"^{link}" if link is not None else ""
         super().__init__(url=f"!date^{epoch}^{date_format}{link}", text=fallback)
 
 

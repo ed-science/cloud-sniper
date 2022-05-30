@@ -21,11 +21,10 @@ class IgnoringSelfEvents(Middleware):
         next: Callable[[], BoltResponse],
     ) -> BoltResponse:
         auth_result = req.context.authorize_result
-        if self._is_self_event(auth_result, req.context.user_id, req.body):
-            self._debug_log(req.body)
-            return req.context.ack()
-        else:
+        if not self._is_self_event(auth_result, req.context.user_id, req.body):
             return next()
+        self._debug_log(req.body)
+        return req.context.ack()
 
     # -----------------------------------------
 

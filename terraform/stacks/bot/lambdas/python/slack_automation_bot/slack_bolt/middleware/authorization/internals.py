@@ -73,6 +73,6 @@ def _to_authorize_result(  # type: ignore
         bot_id=auth_test_result.get("bot_id"),
         bot_user_id=user_id if _is_bot_token(token) else None,
         bot_token=token if _is_bot_token(token) else None,
-        user_id=request_user_id or (user_id if not _is_bot_token(token) else None),
-        user_token=token if not _is_bot_token(token) else None,
+        user_id=request_user_id or (None if _is_bot_token(token) else user_id),
+        user_token=None if _is_bot_token(token) else token,
     )

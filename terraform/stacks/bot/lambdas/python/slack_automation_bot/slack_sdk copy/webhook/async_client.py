@@ -64,7 +64,7 @@ class AsyncWebhookClient:
         self.trust_env_in_session = trust_env_in_session
         self.session = session
         self.auth = auth
-        self.default_headers = default_headers if default_headers else {}
+        self.default_headers = default_headers or {}
         self.default_headers["User-Agent"] = get_user_agent(
             user_agent_prefix, user_agent_suffix
         )

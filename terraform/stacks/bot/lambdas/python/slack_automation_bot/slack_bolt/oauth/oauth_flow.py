@@ -318,7 +318,7 @@ class OAuthFlow:
             if bot_token is not None:
                 auth_test = self.client.auth_test(token=bot_token)
                 bot_id = auth_test["bot_id"]
-                if is_enterprise_install is True:
+                if is_enterprise_install:
                     enterprise_url = auth_test.get("url")
 
             return Installation(

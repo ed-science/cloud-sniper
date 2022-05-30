@@ -53,7 +53,7 @@ class WebhookClient:
         self.timeout = timeout
         self.ssl = ssl
         self.proxy = proxy
-        self.default_headers = default_headers if default_headers else {}
+        self.default_headers = default_headers or {}
         self.default_headers["User-Agent"] = get_user_agent(
             user_agent_prefix, user_agent_suffix
         )
@@ -132,24 +132,22 @@ class WebhookClient:
         try:
             url = self.url
             opener: Optional[OpenerDirector] = None
-            # for security (BAN-B310)
-            if url.lower().startswith("http"):
-                req = Request(
-                    method="POST", url=url, data=body.encode("utf-8"), headers=headers
-                )
-                if self.proxy is not None:
-                    if isinstance(self.proxy, str):
-                        opener = urllib.request.build_opener(
-                            ProxyHandler({"http": self.proxy, "https": self.proxy}),
-                            HTTPSHandler(context=self.ssl),
-                        )
-                    else:
-                        raise SlackRequestError(
-                            f"Invalid proxy detected: {self.proxy} must be a str value"
-                        )
-            else:
+            if not url.lower().startswith("http"):
                 raise SlackRequestError(f"Invalid URL detected: {url}")
 
+            req = Request(
+                method="POST", url=url, data=body.encode("utf-8"), headers=headers
+            )
+            if self.proxy is not None:
+                if isinstance(self.proxy, str):
+                    opener = urllib.request.build_opener(
+                        ProxyHandler({"http": self.proxy, "https": self.proxy}),
+                        HTTPSHandler(context=self.ssl),
+                    )
+                else:
+                    raise SlackRequestError(
+                        f"Invalid proxy detected: {self.proxy} must be a str value"
+                    )
             # NOTE: BAN-B310 is already checked above
             resp: Optional[HTTPResponse] = None
             if opener:

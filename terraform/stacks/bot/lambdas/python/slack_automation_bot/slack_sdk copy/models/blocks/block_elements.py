@@ -53,74 +53,77 @@ class BlockElement(JsonObject, metaclass=ABCMeta):
     ):
         if subtype:
             self._subtype_warning()
-        self.type = type if type else subtype
+        self.type = type or subtype
         show_unknown_key_warning(self, others)
 
     @classmethod
     def parse(
         cls, block_element: Union[dict, "BlockElement"]
     ) -> Optional[Union["BlockElement", TextObject]]:
-        if block_element is None:  # skipcq: PYL-R1705
-            return None
-        elif isinstance(block_element, dict):
-            if "type" in block_element:
-                d = copy.copy(block_element)
-                t = d.pop("type")
-                if t == PlainTextObject.type:  # skipcq: PYL-R1705
-                    return PlainTextObject(**d)
-                elif t == MarkdownTextObject.type:
-                    return MarkdownTextObject(**d)
-                elif t == ImageElement.type:
-                    return ImageElement(**d)
-                elif t == ButtonElement.type:
-                    return ButtonElement(**d)
-                elif t == StaticSelectElement.type:
-                    return StaticSelectElement(**d)
-                elif t == StaticMultiSelectElement.type:
-                    return StaticMultiSelectElement(**d)
-                elif t == ExternalDataSelectElement.type:
-                    return ExternalDataSelectElement(**d)
-                elif t == ExternalDataMultiSelectElement.type:
-                    return ExternalDataMultiSelectElement(**d)
-                elif t == UserSelectElement.type:
-                    return UserSelectElement(**d)
-                elif t == UserMultiSelectElement.type:
-                    return UserMultiSelectElement(**d)
-                elif t == ConversationSelectElement.type:
-                    return ConversationSelectElement(**d)
-                elif t == ConversationMultiSelectElement.type:
-                    return ConversationMultiSelectElement(**d)
-                elif t == ChannelSelectElement.type:
-                    return ChannelSelectElement(**d)
-                elif t == ChannelMultiSelectElement.type:
-                    return ChannelMultiSelectElement(**d)
-                elif t == PlainTextInputElement.type:
-                    return PlainTextInputElement(**d)
-                elif t == RadioButtonsElement.type:
-                    return RadioButtonsElement(**d)
-                elif t == CheckboxesElement.type:
-                    return CheckboxesElement(**d)
-                elif t == OverflowMenuElement.type:
-                    return OverflowMenuElement(**d)
-                elif t == DatePickerElement.type:
-                    return DatePickerElement(**d)
-                else:
-                    cls.logger.warning(
-                        f"Unknown element detected and skipped ({block_element})"
-                    )
-                    return None
+        if (
+            block_element is not None
+            and isinstance(block_element, dict)
+            and "type" in block_element
+        ):
+            d = copy.copy(block_element)
+            t = d.pop("type")
+            if t == PlainTextObject.type:  # skipcq: PYL-R1705
+                return PlainTextObject(**d)
+            elif t == MarkdownTextObject.type:
+                return MarkdownTextObject(**d)
+            elif t == ImageElement.type:
+                return ImageElement(**d)
+            elif t == ButtonElement.type:
+                return ButtonElement(**d)
+            elif t == StaticSelectElement.type:
+                return StaticSelectElement(**d)
+            elif t == StaticMultiSelectElement.type:
+                return StaticMultiSelectElement(**d)
+            elif t == ExternalDataSelectElement.type:
+                return ExternalDataSelectElement(**d)
+            elif t == ExternalDataMultiSelectElement.type:
+                return ExternalDataMultiSelectElement(**d)
+            elif t == UserSelectElement.type:
+                return UserSelectElement(**d)
+            elif t == UserMultiSelectElement.type:
+                return UserMultiSelectElement(**d)
+            elif t == ConversationSelectElement.type:
+                return ConversationSelectElement(**d)
+            elif t == ConversationMultiSelectElement.type:
+                return ConversationMultiSelectElement(**d)
+            elif t == ChannelSelectElement.type:
+                return ChannelSelectElement(**d)
+            elif t == ChannelMultiSelectElement.type:
+                return ChannelMultiSelectElement(**d)
+            elif t == PlainTextInputElement.type:
+                return PlainTextInputElement(**d)
+            elif t == RadioButtonsElement.type:
+                return RadioButtonsElement(**d)
+            elif t == CheckboxesElement.type:
+                return CheckboxesElement(**d)
+            elif t == OverflowMenuElement.type:
+                return OverflowMenuElement(**d)
+            elif t == DatePickerElement.type:
+                return DatePickerElement(**d)
             else:
                 cls.logger.warning(
                     f"Unknown element detected and skipped ({block_element})"
                 )
                 return None
-        elif isinstance(block_element, (TextObject, BlockElement)):
-            return block_element
-        else:
+        elif (
+            block_element is not None
+            and isinstance(block_element, dict)
+            or block_element is not None
+            and not isinstance(block_element, (TextObject, BlockElement))
+        ):
             cls.logger.warning(
                 f"Unknown element detected and skipped ({block_element})"
             )
             return None
+        elif block_element is None:  # skipcq: PYL-R1705
+            return None
+        else:
+            return block_element
 
     @classmethod
     def parse_all(
@@ -475,7 +478,7 @@ class StaticSelectElement(InputInteractiveElement):
 
     @JsonValidator("options and option_groups cannot both be specified")
     def _validate_options_and_option_groups_both_specified(self):
-        return not (self.options is not None and self.option_groups is not None)
+        return self.options is None or self.option_groups is None
 
     @JsonValidator("options or option_groups must be specified")
     def _validate_neither_options_or_option_groups_is_specified(self):
@@ -595,7 +598,7 @@ class SelectElement(InputInteractiveElement):
 
     @JsonValidator("options and option_groups cannot both be specified")
     def _validate_options_and_option_groups_both_specified(self):
-        return not (self.options is not None and self.option_groups is not None)
+        return self.options is None or self.option_groups is None
 
     @JsonValidator("options or option_groups must be specified")
     def _validate_neither_options_or_option_groups_is_specified(self):

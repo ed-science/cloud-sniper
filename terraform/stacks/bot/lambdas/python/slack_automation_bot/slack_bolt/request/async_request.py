@@ -53,9 +53,7 @@ class AsyncBoltRequest:
             self.body = body
         else:
             raise BoltError(error_message_unknown_request_body_type())
-        self.context = build_async_context(
-            AsyncBoltContext(context if context else {}), self.body
-        )
+        self.context = build_async_context(AsyncBoltContext(context or {}), self.body)
         self.lazy_only = self.headers.get("x-slack-bolt-lazy-only", [False])[0]
         self.lazy_function_name = self.headers.get(
             "x-slack-bolt-lazy-function-name", [None]

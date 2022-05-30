@@ -120,9 +120,7 @@ def is_workflow_step_edit(body: Dict[str, Any]) -> bool:
 
 
 def to_options(body: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    if is_options(body):
-        return body
-    return None
+    return body if is_options(body) else None
 
 
 def is_options(body: Dict[str, Any]) -> bool:
@@ -151,9 +149,7 @@ def is_dialog_suggestion(body: Dict[str, Any]) -> bool:
 
 
 def to_shortcut(body: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    if is_shortcut(body):
-        return body
-    return None
+    return body if is_shortcut(body) else None
 
 
 def is_shortcut(body: Dict[str, Any]) -> bool:
@@ -182,9 +178,7 @@ def is_message_shortcut(body: Dict[str, Any]) -> bool:
 
 
 def to_view(body: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    if is_view(body):
-        return body["view"]
-    return None
+    return body["view"] if is_view(body) else None
 
 
 def is_view(body: Dict[str, Any]) -> bool:

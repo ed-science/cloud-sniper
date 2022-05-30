@@ -91,19 +91,19 @@ def _get_headers(
         final_headers["User-Agent"] = get_user_agent()
 
     if token:
-        final_headers.update({"Authorization": "Bearer {}".format(token)})
+        final_headers["Authorization"] = f"Bearer {token}"
     if headers is None:
         headers = {}
 
     # Merge headers specified at client initialization.
-    final_headers.update(headers)
+    final_headers |= headers
 
     # Merge headers specified for a specific request. e.g. oauth.access
     if request_specific_headers:
-        final_headers.update(request_specific_headers)
+        final_headers |= request_specific_headers
 
     if has_json:
-        final_headers.update({"Content-Type": "application/json;charset=utf-8"})
+        final_headers["Content-Type"] = "application/json;charset=utf-8"
 
     if has_files:
         # These are set automatically by the aiohttp library.
@@ -157,7 +157,7 @@ def _build_req_args(
         token = params.pop("token")
     if json is not None and "token" in json:
         token = json.pop("token")
-    req_args = {
+    return {
         "headers": _get_headers(
             headers=headers,
             token=token,
@@ -173,7 +173,6 @@ def _build_req_args(
         "proxy": proxy,
         "auth": auth,
     }
-    return req_args
 
 
 def _parse_web_class_objects(kwargs) -> None:
@@ -216,12 +215,11 @@ def _next_cursor_is_present(data) -> bool:
     Returns:
         A boolean value.
     """
-    present = (
+    return (
         "response_metadata" in data
         and "next_cursor" in data["response_metadata"]
         and data["response_metadata"]["next_cursor"] != ""
     )
-    return present
 
 
 def _to_0_or_1_if_bool(v: Any) -> Union[Any, str]:
@@ -231,14 +229,11 @@ def _to_0_or_1_if_bool(v: Any) -> Union[Any, str]:
 
 
 def _warn_if_text_is_missing(endpoint: str, kwargs: Dict[str, Any]) -> None:
-    attachments = kwargs.get("attachments")
-    if attachments:
+    if attachments := kwargs.get("attachments"):
         if all(
-            [
-                attachment.get("fallback")
-                and len(attachment.get("fallback").strip()) != 0
-                for attachment in attachments
-            ]
+            attachment.get("fallback")
+            and len(attachment.get("fallback").strip()) != 0
+            for attachment in attachments
         ):
             return
         missing = "fallback"
@@ -253,8 +248,6 @@ def _warn_if_text_is_missing(endpoint: str, kwargs: Dict[str, Any]) -> None:
         f"The `{missing}` argument is used in places where content cannot be rendered such as: "
         "system push notifications, assistive technology such as screen readers, etc."
     )
-    # for unit tests etc.
-    skip_deprecation = os.environ.get("SKIP_SLACK_SDK_WARNING")
-    if skip_deprecation:
+    if skip_deprecation := os.environ.get("SKIP_SLACK_SDK_WARNING"):
         return
     warnings.warn(message, UserWarning)

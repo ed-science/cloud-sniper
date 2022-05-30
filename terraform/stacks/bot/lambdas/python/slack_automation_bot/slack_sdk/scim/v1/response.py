@@ -61,9 +61,10 @@ class SCIMResponse:
         self._snake_cased_body = None
 
     def __repr__(self):
-        dict_value = {}
-        for key, value in vars(self).items():
-            dict_value[key] = value.to_dict() if hasattr(value, "to_dict") else value
+        dict_value = {
+            key: value.to_dict() if hasattr(value, "to_dict") else value
+            for key, value in vars(self).items()
+        }
 
         if dict_value:  # skipcq: PYL-R1705
             return f"<slack_sdk.scim.v1.{self.__class__.__name__}: {dict_value}>"

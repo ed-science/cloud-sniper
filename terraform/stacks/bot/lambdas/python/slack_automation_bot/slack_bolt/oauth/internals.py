@@ -109,19 +109,17 @@ def select_consistent_installation_store(
     logger: Logger,
 ) -> Optional[InstallationStore]:
     default = get_or_create_default_installation_store(client_id)
-    if app_store is not None:
-        if oauth_flow_store is not None:
-            if oauth_flow_store is default:
-                # only app_store is intentionally set in this case
-                return app_store
-
-            # if both are intentionally set, prioritize app_store
-            if oauth_flow_store is not app_store:
-                logger.warning(warning_installation_store_conflicts())
-            return oauth_flow_store
-        else:
-            # only app_store is available
-            return app_store
-    else:
+    if app_store is None:
         # only oauth_flow_store is available
         return oauth_flow_store
+    if oauth_flow_store is None:
+        # only app_store is available
+        return app_store
+    if oauth_flow_store is default:
+        # only app_store is intentionally set in this case
+        return app_store
+
+    # if both are intentionally set, prioritize app_store
+    if oauth_flow_store is not app_store:
+        logger.warning(warning_installation_store_conflicts())
+    return oauth_flow_store

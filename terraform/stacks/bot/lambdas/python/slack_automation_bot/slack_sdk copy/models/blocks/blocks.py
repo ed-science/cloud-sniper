@@ -50,7 +50,7 @@ class Block(JsonObject):
     ):
         if subtype:
             self._subtype_warning()
-        self.type = type if type else subtype
+        self.type = type or subtype
         self.block_id = block_id
         self.color = None
 

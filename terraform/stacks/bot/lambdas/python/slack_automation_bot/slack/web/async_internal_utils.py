@@ -65,19 +65,19 @@ def _get_headers(
     }
 
     if token:
-        final_headers.update({"Authorization": "Bearer {}".format(token)})
+        final_headers["Authorization"] = f"Bearer {token}"
     if headers is None:
         headers = {}
 
     # Merge headers specified at client initialization.
-    final_headers.update(headers)
+    final_headers |= headers
 
     # Merge headers specified for a specific request. e.g. oauth.access
     if request_specific_headers:
-        final_headers.update(request_specific_headers)
+        final_headers |= request_specific_headers
 
     if has_json:
-        final_headers.update({"Content-Type": "application/json;charset=utf-8"})
+        final_headers["Content-Type"] = "application/json;charset=utf-8"
 
     if has_files:
         # These are set automatically by the aiohttp library.
@@ -120,7 +120,7 @@ def _build_req_args(
         token = params.pop("token")
     if json is not None and "token" in json:
         token = json.pop("token")
-    req_args = {
+    return {
         "headers": _get_headers(
             headers=headers,
             token=token,
@@ -136,7 +136,6 @@ def _build_req_args(
         "proxy": proxy,
         "auth": auth,
     }
-    return req_args
 
 
 def _files_to_data(req_args: dict) -> List[BinaryIO]:

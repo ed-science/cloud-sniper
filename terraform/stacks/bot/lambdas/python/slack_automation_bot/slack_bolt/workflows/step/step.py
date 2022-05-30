@@ -165,11 +165,11 @@ class WorkflowStepBuilder:
         :return: WorkflowStep object
         """
         if self._edit is None:
-            raise BoltError(f"edit listener is not registered")
+            raise BoltError("edit listener is not registered")
         if self._save is None:
-            raise BoltError(f"save listener is not registered")
+            raise BoltError("save listener is not registered")
         if self._execute is None:
-            raise BoltError(f"execute listener is not registered")
+            raise BoltError("execute listener is not registered")
 
         return WorkflowStep(
             callback_id=self.callback_id,
@@ -279,9 +279,9 @@ class WorkflowStep:
         if isinstance(listener_or_functions, Listener):
             return listener_or_functions
         elif isinstance(listener_or_functions, list):
-            matchers = matchers if matchers else []
+            matchers = matchers or []
             matchers.insert(0, cls._build_primary_matcher(name, callback_id))
-            middleware = middleware if middleware else []
+            middleware = middleware or []
             middleware.insert(0, cls._build_single_middleware(name, callback_id))
             functions = listener_or_functions
             ack_function = functions.pop(0)

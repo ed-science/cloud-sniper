@@ -281,20 +281,18 @@ class AsyncApp:
         self._async_middleware_list.append(
             AsyncRequestVerification(self._signing_secret)
         )
-        if self._async_oauth_flow is None:
-            if self._token:
-                self._async_middleware_list.append(AsyncSingleTeamAuthorization())
-            elif self._async_authorize is not None:
-                self._async_middleware_list.append(
-                    AsyncMultiTeamsAuthorization(authorize=self._async_authorize)
-                )
-            else:
-                raise BoltError(error_token_required())
-        else:
+        if self._async_oauth_flow is None and self._token:
+            self._async_middleware_list.append(AsyncSingleTeamAuthorization())
+        elif (
+            self._async_oauth_flow is None
+            and self._async_authorize is not None
+            or self._async_oauth_flow is not None
+        ):
             self._async_middleware_list.append(
                 AsyncMultiTeamsAuthorization(authorize=self._async_authorize)
             )
-
+        else:
+            raise BoltError(error_token_required())
         self._async_middleware_list.append(AsyncIgnoringSelfEvents())
         self._async_middleware_list.append(AsyncUrlVerification())
         self._init_middleware_list_done = True
@@ -911,8 +909,7 @@ class AsyncApp:
     ) -> Optional[Sequence[Callable[..., Awaitable[Optional[BoltResponse]]]]]:
         if kwargs:
             functions = [kwargs["ack"]]
-            for sub in kwargs["lazy"]:
-                functions.append(sub)
+            functions.extend(iter(kwargs["lazy"]))
             return functions
         return None
 
@@ -924,14 +921,9 @@ class AsyncApp:
         middleware: Optional[Sequence[Union[Callable, AsyncMiddleware]]],
         auto_acknowledgement: bool = False,
     ) -> Optional[Callable[..., Awaitable[Optional[BoltResponse]]]]:
-        value_to_return = None
         if not isinstance(functions, list):
             functions = list(functions)
-        if len(functions) == 1:
-            # In the case where the function is registered using decorator,
-            # the registration should return the original function.
-            value_to_return = functions[0]
-
+        value_to_return = functions[0] if len(functions) == 1 else None
         for func in functions:
             if not inspect.iscoroutinefunction(func):
                 name = get_name_for_callable(func)

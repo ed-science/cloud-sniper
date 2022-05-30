@@ -195,11 +195,10 @@ class AbstractDialogSelector(JsonObject, metaclass=ABCMeta):
                 json["selected_options"] = extract_json([self.value], "dialog")
             elif self.value is not None:
                 json["selected_options"] = Option.from_single_value(self.value)
-        else:
-            if isinstance(self.value, Option):
-                json["value"] = self.value.value
-            elif self.value is not None:
-                json["value"] = self.value
+        elif isinstance(self.value, Option):
+            json["value"] = self.value.value
+        elif self.value is not None:
+            json["value"] = self.value
         return json
 
 
@@ -475,10 +474,7 @@ class DialogBuilder(JsonObject):
             state: Extra state information that you need to pass from this dialog
                 back to your application on submission
         """
-        if isinstance(state, dict):
-            self._state = dumps(state)
-        else:
-            self._state = state
+        self._state = dumps(state) if isinstance(state, dict) else state
         return self
 
     def callback_id(self, callback_id: str) -> "DialogBuilder":

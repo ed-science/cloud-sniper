@@ -72,15 +72,22 @@ def build_required_kwargs(
         # To support instance/class methods in a class for listeners/middleware,
         # check if the first argument is either self or cls
         first_arg_name = required_arg_names[0]
-        if first_arg_name in {"self", "cls"}:
+        if (
+            first_arg_name not in {"self", "cls"}
+            and first_arg_name not in all_available_args.keys()
+            and this_func is None
+        ):
+            logger.warning(warning_skip_uncommon_arg_name(first_arg_name))
             required_arg_names.pop(0)
-        elif first_arg_name not in all_available_args.keys():
-            if this_func is None:
-                logger.warning(warning_skip_uncommon_arg_name(first_arg_name))
-                required_arg_names.pop(0)
-            elif inspect.ismethod(this_func):
-                # We are sure that we should skip manipulating this arg
-                required_arg_names.pop(0)
+        elif (
+            first_arg_name not in {"self", "cls"}
+            and first_arg_name not in all_available_args.keys()
+            and this_func is not None
+            and inspect.ismethod(this_func)
+            or first_arg_name in {"self", "cls"}
+        ):
+            # We are sure that we should skip manipulating this arg
+            required_arg_names.pop(0)
 
     kwargs: Dict[str, Any] = {
         k: v for k, v in all_available_args.items() if k in required_arg_names

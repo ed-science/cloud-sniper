@@ -148,34 +148,32 @@ class LegacySlackResponse(object):  # skipcq: PYL-R0205
         self._iteration += 1
         if self._iteration == 1:
             return self
-        if self._next_cursor_is_present(self.data):  # skipcq: PYL-R1705
-            params = self.req_args.get("params", {})
-            if params is None:
-                params = {}
-            params.update({"cursor": self.data["response_metadata"]["next_cursor"]})
-            self.req_args.update({"params": params})
-
-            if self._use_sync_aiohttp:
-                # We no longer recommend going with this way
-                response = asyncio.get_event_loop().run_until_complete(
-                    self._client._request(  # skipcq: PYL-W0212
-                        http_verb=self.http_verb,
-                        api_url=self.api_url,
-                        req_args=self.req_args,
-                    )
-                )
-            else:
-                # This method sends a request in a synchronous way
-                response = self._client._request_for_pagination(  # skipcq: PYL-W0212
-                    api_url=self.api_url, req_args=self.req_args
-                )
-
-            self.data = response["data"]
-            self.headers = response["headers"]
-            self.status_code = response["status_code"]
-            return self.validate()
-        else:
+        if not self._next_cursor_is_present(self.data):
             raise StopIteration
+        params = self.req_args.get("params", {})
+        if params is None:
+            params = {}
+        params.update({"cursor": self.data["response_metadata"]["next_cursor"]})
+        self.req_args.update({"params": params})
+
+        response = (
+            asyncio.get_event_loop().run_until_complete(
+                self._client._request(  # skipcq: PYL-W0212
+                    http_verb=self.http_verb,
+                    api_url=self.api_url,
+                    req_args=self.req_args,
+                )
+            )
+            if self._use_sync_aiohttp
+            else self._client._request_for_pagination(  # skipcq: PYL-W0212
+                api_url=self.api_url, req_args=self.req_args
+            )
+        )
+
+        self.data = response["data"]
+        self.headers = response["headers"]
+        self.status_code = response["status_code"]
+        return self.validate()
 
     def get(self, key, default=None):
         """Retrieves any key from the response data.
@@ -229,9 +227,8 @@ class LegacySlackResponse(object):  # skipcq: PYL-R0205
         Returns:
             A boolean value.
         """
-        present = (
+        return (
             "response_metadata" in data
             and "next_cursor" in data["response_metadata"]
             and data["response_metadata"]["next_cursor"] != ""
         )
-        return present
