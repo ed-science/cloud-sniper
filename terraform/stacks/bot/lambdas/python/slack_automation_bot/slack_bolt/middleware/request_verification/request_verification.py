@@ -33,9 +33,8 @@ class RequestVerification(Middleware):  # type: ignore
         signature = req.headers.get("x-slack-signature", [""])[0]
         if self.verifier.is_valid(body, timestamp, signature):
             return next()
-        else:
-            self._debug_log_error(signature, timestamp, body)
-            return self._build_error_response()
+        self._debug_log_error(signature, timestamp, body)
+        return self._build_error_response()
 
     # -----------------------------------------
 

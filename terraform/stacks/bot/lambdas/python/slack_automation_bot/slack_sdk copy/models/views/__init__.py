@@ -177,18 +177,17 @@ class ViewState(JsonObject):
 
     def to_dict(self, *args) -> Dict[str, Dict[str, Dict[str, dict]]]:  # type: ignore
         self.validate_json()
-        if self.values:  # skipcq: PYL-R1705
-            dict_values: Dict[str, Dict[str, dict]] = {}
-            for block_id, actions in self.values.items():
-                if actions:
-                    dict_value: Dict[str, dict] = {
-                        action_id: value.to_dict()  # type: ignore
-                        for action_id, value in actions.items()  # type: ignore
-                    }
-                    dict_values[block_id] = dict_value
-            return {"values": dict_values}  # type: ignore
-        else:
+        if not self.values:
             return {}
+        dict_values: Dict[str, Dict[str, dict]] = {}
+        for block_id, actions in self.values.items():
+            if actions:
+                dict_value: Dict[str, dict] = {
+                    action_id: value.to_dict()  # type: ignore
+                    for action_id, value in actions.items()  # type: ignore
+                }
+                dict_values[block_id] = dict_value
+        return {"values": dict_values}  # type: ignore
 
 
 class ViewStateValue(JsonObject):

@@ -11,14 +11,7 @@ from ..state_store import OAuthStateStore
 
 
 class FileOAuthStateStore(OAuthStateStore, AsyncOAuthStateStore):
-    def __init__(
-        self,
-        *,
-        expiration_seconds: int,
-        base_dir: str = str(Path.home()) + "/.bolt-app-oauth-state",
-        client_id: Optional[str] = None,
-        logger: Logger = logging.getLogger(__name__),
-    ):
+    def __init__(self, *, expiration_seconds: int, base_dir: str = f"{str(Path.home())}/.bolt-app-oauth-state", client_id: Optional[str] = None, logger: Logger = logging.getLogger(__name__)):
         self.expiration_seconds = expiration_seconds
 
         self.base_dir = base_dir

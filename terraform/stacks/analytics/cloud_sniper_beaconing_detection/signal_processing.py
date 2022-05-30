@@ -39,7 +39,7 @@ class signalProcess:
         """
 
         # Validate processing options values if present
-        if self.debug is True:
+        if self.debug:
             print("Validating processing options\n")
 
         if options_in is not None:
@@ -54,7 +54,7 @@ class signalProcess:
 
         # Validate timestamp if present, and convert to milliseconds since epoch if format is datetime string
         if "time" in self.data:
-            if self.debug is True:
+            if self.debug:
                 print("Validating Timestamps and Converting to ms since epoch if required\n")
 
             for time_key in self.data["time"]:
@@ -80,8 +80,8 @@ class signalProcess:
                 datanew = {'data':{}}
 
             # Index any samples == self.value for each time-series in input dictionary
-            for m,keys in enumerate(dataN['data']):
-                samples = range(0,len(dataN['data'][keys]))
+            for keys in dataN['data']:
+                samples = range(len(dataN['data'][keys]))
                 times = np.asfarray(dataN['time'][keys])
                 tmp_array = np.zeros(shape=(len(samples)),dtype=float)
                 if self.value == 'NaN':
@@ -90,16 +90,16 @@ class signalProcess:
                 else:
                     inx_null = [g for g in samples if np.abs(dataN['data'][keys][g] - self.value) <= self.small]
                     inx_ok = [g for g in samples if np.abs(dataN['data'][keys][g] - self.value) > 1]
-                if len(inx_null) == 0:    # No replaced values in returned series
+                if not inx_null:    # No replaced values in returned series
                     tmp_array[:] = dataN['data'][keys]
 
                 elif len(inx_ok) == 1:    # Only 1 good value in input series
                     tmp_array[:] = dataN['data'][keys][inx_ok[0]]
 
-                elif len(inx_ok) == 0:    # No GOOD values in array so maintain all input data in returned series
+                elif not inx_ok:    # No GOOD values in array so maintain all input data in returned series
                     tmp_array[:] = self.value
 
-                else:                    # At least 2 good values in input series to interpolate
+                else:        # At least 2 good values in input series to interpolate
 
                     # Handle case of first point to set lower bound for interpolation
                     if inx_null[0] == 0:
@@ -110,10 +110,19 @@ class signalProcess:
                         dataN['data'][keys][-1] = dataN['data'][keys][inx_ok[-1]]
 
                     # Re-index replaced values with lower/upper bounds set from above
-                    if self.value == 'NaN':
-                        inx_mod = [g for g in samples if not np.isnan(dataN['data'][keys][g])]
-                    else:
-                        inx_mod = [g for g in samples if np.abs(dataN['data'][keys][g] - self.value) > 1]
+                    inx_mod = (
+                        [
+                            g
+                            for g in samples
+                            if not np.isnan(dataN['data'][keys][g])
+                        ]
+                        if self.value == 'NaN'
+                        else [
+                            g
+                            for g in samples
+                            if np.abs(dataN['data'][keys][g] - self.value) > 1
+                        ]
+                    )
 
                     # Handle interior points with linear interpolant
                     signal_intrp = interp1d(times[inx_mod],np.asfarray(dataN['data'][keys])[inx_mod])

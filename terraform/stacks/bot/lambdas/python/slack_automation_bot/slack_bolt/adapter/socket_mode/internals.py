@@ -13,8 +13,7 @@ from slack_bolt.response import BoltResponse
 
 def run_bolt_app(app: App, req: SocketModeRequest):  # type: ignore
     bolt_req: BoltRequest = BoltRequest(mode="socket_mode", body=req.payload)
-    bolt_resp: BoltResponse = app.dispatch(bolt_req)
-    return bolt_resp
+    return app.dispatch(bolt_req)
 
 
 def send_response(

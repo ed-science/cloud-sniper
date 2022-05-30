@@ -23,13 +23,14 @@ account_ids = {
 
 def assume_role(account_id, boto_type):
 
-    log.info("Assuming role: " + str(ROLE_SPOKE) + " account: " + str(account_id))
+    log.info(f"Assuming role: {str(ROLE_SPOKE)} account: {str(account_id)}")
 
     try:
         sts = sts_connection.assume_role(
-            RoleArn="arn:aws:iam::" + account_id + ":role/" + ROLE_SPOKE,
-            RoleSessionName="cross_acct_lambda"
+            RoleArn=f"arn:aws:iam::{account_id}:role/{ROLE_SPOKE}",
+            RoleSessionName="cross_acct_lambda",
         )
+
 
         ACCESS_KEY = sts['Credentials']['AccessKeyId']
         SECRET_KEY = sts['Credentials']['SecretAccessKey']
@@ -51,7 +52,7 @@ def assume_role(account_id, boto_type):
             )
         return client
     except Exception as e:
-        log.info("Role could not be assumed " + str(e))
+        log.info(f"Role could not be assumed {str(e)}")
 
 
 def iam_user_password_last_used():
@@ -68,7 +69,7 @@ def iam_user_password_last_used():
             user_name = str(iam_user.LoginProfile()).split('\'')
 
             if iam_user.password_last_used:
-                log.info("User has console access: " + str(iam_user))
+                log.info(f"User has console access: {str(iam_user)}")
 
                 date_last_used = iam_user.password_last_used
                 days_unused = (datetime.datetime.now() - date_last_used.replace(tzinfo=None)).days
@@ -82,7 +83,7 @@ def iam_user_password_last_used():
                 last_login_console_delete.append(str(user_name[1]))
 
     except Exception as e:
-        log.info("No user resources in the collection" + str(e))
+        log.info(f"No user resources in the collection{str(e)}")
 
 
 def iam_list_access_keys():
@@ -115,19 +116,18 @@ def iam_list_access_keys():
                     else:
                         last_used = iam.get_access_key_last_used(AccessKeyId=AccessId)
 
-                    if Status == "Active":
-                        if last_date in last_used['AccessKeyLastUsed']:
-                            date_last_used = last_used['AccessKeyLastUsed'][last_date]
-                            days_unused = (datetime.datetime.now() - date_last_used.replace(tzinfo=None)).days
-                            if days_unused >= 90:
-                                access_keys_last_delete.append(user.user_name)
-                            else:
-                                access_keys_last_keep.append(user.user_name)
-                        else:
-                            # Key is Active but never used
+                    if (
+                        Status == "Active"
+                        and last_date in last_used['AccessKeyLastUsed']
+                    ):
+                        date_last_used = last_used['AccessKeyLastUsed'][last_date]
+                        days_unused = (datetime.datetime.now() - date_last_used.replace(tzinfo=None)).days
+                        if days_unused >= 90:
                             access_keys_last_delete.append(user.user_name)
+                        else:
+                            access_keys_last_keep.append(user.user_name)
                     else:
-                        # Keys is inactive
+                        # Key is Active but never used
                         access_keys_last_delete.append(user.user_name)
             else:
                 # No keys for this user
@@ -153,10 +153,7 @@ def iam_users_to_nuke():
 
 def message_to_slack():
 
-    users = ""
-    for u in set(iam_users_to_clean):
-        users += u + " "
-
+    users = "".join(f"{u} " for u in set(iam_users_to_clean))
     try:
         log.info("Sending message to Slack ...")
 
@@ -171,12 +168,18 @@ def message_to_slack():
                 'icon_emoji': ':robot_face:'
             }
             response = requests.post(WEBHOOK_URL, data=json.dumps(data), headers={'Content-Type': 'application/json'})
-            log.info('Sending message to Slack. Response: ' + str(response.text) + ' Response Code: ' + str(response.status_code))
+            log.info(
+                f'Sending message to Slack. Response: {str(response.text)} Response Code: {str(response.status_code)}'
+            )
+
         else:
-            log.info(str(account_name) + ": No IAM user has passwords and active access keys that have not been used within 90 days")
+            log.info(
+                f"{str(account_name)}: No IAM user has passwords and active access keys that have not been used within 90 days"
+            )
+
 
     except Exception as e:
-        log.info("Message could not be send to Slack: " + str(e))
+        log.info(f"Message could not be send to Slack: {str(e)}")
 
 
 def put_to_s3():
@@ -205,7 +208,7 @@ def put_to_s3():
         (bucket.Object(key=f"{iam_path}/iam_{NOW}.json")
                .put(Body=bytes(json.dumps(dataset).encode('UTF-8'))))
     except Exception as e:
-        log.info("Could not put the object to S3" + str(e))
+        log.info(f"Could not put the object to S3{str(e)}")
 
 
 def cloud_sniper_iam(event, context):
@@ -257,4 +260,4 @@ def cloud_sniper_iam(event, context):
             put_to_s3()
 
         except Exception as e:
-            log.error('IAM report failed ' + str(e))
+            log.error(f'IAM report failed {str(e)}')

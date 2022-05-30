@@ -24,12 +24,11 @@ class SslCheck(Middleware):  # type: ignore
         resp: BoltResponse,
         next: Callable[[], BoltResponse],
     ) -> BoltResponse:
-        if self._is_ssl_check_request(req.body):
-            if self._verify_token_if_needed(req.body):
-                return self._build_error_response()
-            return self._build_success_response()
-        else:
+        if not self._is_ssl_check_request(req.body):
             return next()
+        if self._verify_token_if_needed(req.body):
+            return self._build_error_response()
+        return self._build_success_response()
 
     # -----------------------------------------
 

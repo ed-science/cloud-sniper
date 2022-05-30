@@ -13,14 +13,7 @@ from slack_sdk.oauth.installation_store.models.installation import Installation
 
 
 class FileInstallationStore(InstallationStore, AsyncInstallationStore):
-    def __init__(
-        self,
-        *,
-        base_dir: str = str(Path.home()) + "/.bolt-app-installation",
-        historical_data_enabled: bool = True,
-        client_id: Optional[str] = None,
-        logger: Logger = logging.getLogger(__name__),
-    ):
+    def __init__(self, *, base_dir: str = f"{str(Path.home())}/.bolt-app-installation", historical_data_enabled: bool = True, client_id: Optional[str] = None, logger: Logger = logging.getLogger(__name__)):
         self.base_dir = base_dir
         self.historical_data_enabled = historical_data_enabled
         self.client_id = client_id

@@ -46,8 +46,7 @@ class AsyncSlackAppServer:
             self.web_app.add_routes([web.post(self.path, self.handle_post_requests)])
 
     async def handle_get_requests(self, request: web.Request) -> web.Response:
-        oauth_flow = self._bolt_oauth_flow
-        if oauth_flow:
+        if oauth_flow := self._bolt_oauth_flow:
             if request.path == oauth_flow.install_path:
                 bolt_req = await to_bolt_request(request)
                 bolt_resp = await oauth_flow.handle_installation(bolt_req)

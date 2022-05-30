@@ -330,12 +330,14 @@ class Connection:
                             ping_pong_to_skip = (
                                 header is not None
                                 and header.opcode is not None
-                                and (
-                                    header.opcode == FrameHeader.OPCODE_PING
-                                    or header.opcode == FrameHeader.OPCODE_PONG
-                                )
+                                and header.opcode
+                                in [
+                                    FrameHeader.OPCODE_PING,
+                                    FrameHeader.OPCODE_PONG,
+                                ]
                                 and not self.ping_pong_trace_enabled
                             )
+
                             if not ping_pong_to_skip and count < 5:
                                 # if so many same payloads came in, the trace logging should be skipped.
                                 # e.g., after receiving "UNAUTHENTICATED: cache_error", many "opcode: -, payload: "
@@ -411,14 +413,13 @@ class Connection:
                         "The reason why you got [Errno 9] Bad file descriptor here is "
                         "the socket is no longer available."
                     )
+                elif self.on_error_listener is None:
+                    self.logger.exception(
+                        "Got an OSError while receiving data"
+                        f" (session id: {self.session_id}, error: {e})"
+                    )
                 else:
-                    if self.on_error_listener is not None:
-                        self.on_error_listener(e)
-                    else:
-                        self.logger.exception(
-                            "Got an OSError while receiving data"
-                            f" (session id: {self.session_id}, error: {e})"
-                        )
+                    self.on_error_listener(e)
                 # As this connection no longer works in any way, terminating it
                 if self.is_active():
                     try:

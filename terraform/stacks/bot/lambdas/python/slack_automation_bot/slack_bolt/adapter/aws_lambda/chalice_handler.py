@@ -53,10 +53,9 @@ class ChaliceSlackRequestHandler:
                 )
                 if is_callback:
                     bolt_resp = oauth_flow.handle_callback(bolt_req)
-                    return to_chalice_response(bolt_resp)
                 else:
                     bolt_resp = oauth_flow.handle_installation(bolt_req)
-                    return to_chalice_response(bolt_resp)
+                return to_chalice_response(bolt_resp)
         elif method == "POST":
             bolt_req: BoltRequest = to_bolt_request(request, body)
             # https://docs.aws.amazon.com/lambda/latest/dg/python-context.html

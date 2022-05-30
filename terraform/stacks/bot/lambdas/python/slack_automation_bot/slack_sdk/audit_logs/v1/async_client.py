@@ -70,7 +70,7 @@ class AsyncAuditLogsClient:
         self.session = session
         self.trust_env_in_session = trust_env_in_session
         self.auth = auth
-        self.default_headers = default_headers if default_headers else {}
+        self.default_headers = default_headers or {}
         self.default_headers["User-Agent"] = get_user_agent(
             user_agent_prefix, user_agent_suffix
         )
@@ -165,7 +165,7 @@ class AsyncAuditLogsClient:
             "entity": entity,
         }
         if additional_query_params is not None:
-            query_params.update(additional_query_params)
+            query_params |= additional_query_params
         query_params = {k: v for k, v in query_params.items() if v is not None}
         return await self.api_call(
             path="logs",

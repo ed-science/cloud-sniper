@@ -35,15 +35,14 @@ def parse_body(body: str, content_type: Optional[str]) -> Dict[str, Any]:
         content_type is not None and content_type == "application/json"
     ) or body.startswith("{"):
         return json.loads(body)
-    else:
-        if "payload" in body:  # This is not JSON format yet
-            params = dict(parse_qsl(body))
-            if params.get("payload") is not None:
-                return json.loads(params.get("payload"))
-            else:
-                return {}
-        else:
-            return dict(parse_qsl(body))
+    if "payload" not in body:
+        return dict(parse_qsl(body))
+    params = dict(parse_qsl(body))
+    return (
+        json.loads(params.get("payload"))
+        if params.get("payload") is not None
+        else {}
+    )
 
 
 def extract_is_enterprise_install(payload: Dict[str, Any]) -> Optional[bool]:
@@ -129,17 +128,13 @@ def extract_channel_id(payload: Dict[str, Any]) -> Optional[str]:
 
 def build_context(context: BoltContext, body: Dict[str, Any]) -> BoltContext:
     context["is_enterprise_install"] = extract_is_enterprise_install(body)
-    enterprise_id = extract_enterprise_id(body)
-    if enterprise_id:
+    if enterprise_id := extract_enterprise_id(body):
         context["enterprise_id"] = enterprise_id
-    team_id = extract_team_id(body)
-    if team_id:
+    if team_id := extract_team_id(body):
         context["team_id"] = team_id
-    user_id = extract_user_id(body)
-    if user_id:
+    if user_id := extract_user_id(body):
         context["user_id"] = user_id
-    channel_id = extract_channel_id(body)
-    if channel_id:
+    if channel_id := extract_channel_id(body):
         context["channel_id"] = channel_id
     if "response_url" in body:
         context["response_url"] = body["response_url"]

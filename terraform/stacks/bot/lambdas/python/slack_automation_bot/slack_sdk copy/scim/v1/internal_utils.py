@@ -33,7 +33,7 @@ def _to_dict_without_not_given(obj: Any) -> dict:
         if key == "unknown_fields":
             if value is not None:
                 converted = _to_dict_without_not_given(value)
-                dict_value.update(converted)
+                dict_value |= converted
             continue
 
         dict_key = _to_camel_case_key(key)
@@ -80,7 +80,7 @@ def _to_snake_cased(original: Optional[Dict[str, Any]]) -> Optional[Dict[str, An
         lambda s: re.sub(
             "^_",
             "",
-            "".join(["_" + c.lower() if c.isupper() else c for c in s]),
+            "".join([f"_{c.lower()}" if c.isupper() else c for c in s]),
         ),
     )
 
@@ -115,13 +115,15 @@ def _convert_dict_keys(
             for element in original_value:
                 if is_dict:
                     if isinstance(element, dict):
-                        new_element = {}
-                        for elem_key, elem_value in element.items():
-                            new_element[convert(elem_key)] = (
+                        new_element = {
+                            convert(elem_key): (
                                 _convert_dict_keys(elem_value, {}, convert)
                                 if isinstance(elem_value, dict)
                                 else _create_copy(elem_value)
                             )
+                            for elem_key, elem_value in element.items()
+                        }
+
                         result_dict[new_key].append(new_element)
                 else:
                     result_dict[new_key].append(_create_copy(original_value))
@@ -142,9 +144,9 @@ def _build_request_headers(
     if default_headers is None or "User-Agent" not in default_headers:
         request_headers["User-Agent"] = get_user_agent()
     if default_headers is not None:
-        request_headers.update(default_headers)
+        request_headers |= default_headers
     if additional_headers is not None:
-        request_headers.update(additional_headers)
+        request_headers |= additional_headers
     return request_headers
 
 

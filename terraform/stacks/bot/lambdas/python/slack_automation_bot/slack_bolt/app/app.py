@@ -258,27 +258,26 @@ class App:
         )
         self._middleware_list.append(RequestVerification(self._signing_secret))
 
-        if self._oauth_flow is None:
-            if self._token is not None:
-                try:
-                    auth_test_result = None
-                    if token_verification_enabled:
-                        auth_test_result = self._client.auth_test(token=self._token)
-                    self._middleware_list.append(
-                        SingleTeamAuthorization(auth_test_result=auth_test_result)
-                    )
-                except SlackApiError as err:
-                    raise BoltError(error_auth_test_failure(err.response))
-            elif self._authorize is not None:
+        if self._oauth_flow is None and self._token is not None:
+            try:
+                auth_test_result = None
+                if token_verification_enabled:
+                    auth_test_result = self._client.auth_test(token=self._token)
                 self._middleware_list.append(
-                    MultiTeamsAuthorization(authorize=self._authorize)
+                    SingleTeamAuthorization(auth_test_result=auth_test_result)
                 )
-            else:
-                raise BoltError(error_token_required())
-        else:
+            except SlackApiError as err:
+                raise BoltError(error_auth_test_failure(err.response))
+        elif (
+            self._oauth_flow is None
+            and self._authorize is not None
+            or self._oauth_flow is not None
+        ):
             self._middleware_list.append(
                 MultiTeamsAuthorization(authorize=self._authorize)
             )
+        else:
+            raise BoltError(error_token_required())
         self._middleware_list.append(IgnoringSelfEvents())
         self._middleware_list.append(UrlVerification())
         self._init_middleware_list_done = True
@@ -860,8 +859,7 @@ class App:
     ) -> Optional[Sequence[Callable[..., Optional[BoltResponse]]]]:
         if kwargs:
             functions = [kwargs["ack"]]
-            for sub in kwargs["lazy"]:
-                functions.append(sub)
+            functions.extend(iter(kwargs["lazy"]))
             return functions
         return None
 
@@ -873,14 +871,9 @@ class App:
         middleware: Optional[Sequence[Union[Callable, Middleware]]],
         auto_acknowledgement: bool = False,
     ) -> Optional[Callable[..., Optional[BoltResponse]]]:
-        value_to_return = None
         if not isinstance(functions, list):
             functions = list(functions)
-        if len(functions) == 1:
-            # In the case where the function is registered using decorator,
-            # the registration should return the original function.
-            value_to_return = functions[0]
-
+        value_to_return = functions[0] if len(functions) == 1 else None
         listener_matchers = [
             CustomListenerMatcher(app_name=self.name, func=f) for f in (matchers or [])
         ]

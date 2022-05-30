@@ -133,21 +133,20 @@ class BaseClient:
 
         show_2020_01_deprecation(api_method)
 
-        if self.run_async or self.use_sync_aiohttp:
-            if self._event_loop is None:
-                self._event_loop = _get_event_loop()
-
-            future = asyncio.ensure_future(
-                self._send(http_verb=http_verb, api_url=api_url, req_args=req_args),
-                loop=self._event_loop,
-            )
-            if self.run_async:
-                return future
-            if self.use_sync_aiohttp:
-                # Using this is no longer recommended - just keep this for backward-compatibility
-                return self._event_loop.run_until_complete(future)
-        else:
+        if not self.run_async and not self.use_sync_aiohttp:
             return self._sync_send(api_url=api_url, req_args=req_args)
+        if self._event_loop is None:
+            self._event_loop = _get_event_loop()
+
+        future = asyncio.ensure_future(
+            self._send(http_verb=http_verb, api_url=api_url, req_args=req_args),
+            loop=self._event_loop,
+        )
+        if self.run_async:
+            return future
+        if self.use_sync_aiohttp:
+            # Using this is no longer recommended - just keep this for backward-compatibility
+            return self._event_loop.run_until_complete(future)
 
     # =================================================================
     # aiohttp based async WebClient
@@ -234,7 +233,7 @@ class BaseClient:
 
         body_params = {}
         if params:
-            body_params.update(params)
+            body_params |= params
         if data:
             body_params.update(data)
 
@@ -408,8 +407,7 @@ class BaseClient:
                 readable = getattr(value, "readable", None)
                 if readable and value.readable():
                     filename = "Uploaded file"
-                    name_attr = getattr(value, "name", None)
-                    if name_attr:
+                    if name_attr := getattr(value, "name", None):
                         filename = (
                             name_attr.decode("utf-8")
                             if isinstance(name_attr, bytes)
@@ -498,13 +496,13 @@ class BaseClient:
         self, token: str, has_json: bool, has_files: bool, additional_headers: dict
     ) -> Dict[str, str]:
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        headers.update(self.headers)
+        headers |= self.headers
         if token:
-            headers.update({"Authorization": "Bearer {}".format(token)})
+            headers["Authorization"] = f"Bearer {token}"
         if additional_headers:
             headers.update(additional_headers)
         if has_json:
-            headers.update({"Content-Type": "application/json;charset=utf-8"})
+            headers["Content-Type"] = "application/json;charset=utf-8"
         if has_files:
             # will be set afterwards
             headers.pop("Content-Type", None)

@@ -67,7 +67,7 @@ class TextObject(JsonObject):
             self._subtype_warning()
 
         self.text = text
-        self.type = type if type else subtype
+        self.type = type or subtype
         self.emoji = emoji
 
 
@@ -449,8 +449,6 @@ class ConfirmObject(JsonObject):
                 json["title"] = self._title.text
             if self._text:
                 json["text"] = self._text.text
-            return json
-
         else:
             self.validate_json()
             json = {}
@@ -464,7 +462,8 @@ class ConfirmObject(JsonObject):
                 json["deny"] = self._deny.to_dict()
             if self._style:
                 json["style"] = self._style
-            return json
+
+        return json
 
 
 class DispatchActionConfig(JsonObject):

@@ -306,7 +306,7 @@ class SQLite3InstallationStore(InstallationStore, AsyncInstallationStore):
                     f"find_bot's query result: {result} (database: {self.database})"
                 )
                 if row and len(row) > 0:
-                    bot = Bot(
+                    return Bot(
                         app_id=row[0],
                         enterprise_id=row[1],
                         enterprise_name=row[2],
@@ -319,7 +319,7 @@ class SQLite3InstallationStore(InstallationStore, AsyncInstallationStore):
                         is_enterprise_install=row[9],
                         installed_at=row[10],
                     )
-                    return bot
+
                 return None
 
         except Exception as e:  # skipcq: PYL-W0703
@@ -396,7 +396,6 @@ class SQLite3InstallationStore(InstallationStore, AsyncInstallationStore):
                         """,
                         [self.client_id, enterprise_id or "", team_id],
                     )
-                    row = cur.fetchone()
                 else:
                     cur = conn.execute(
                         f"""
@@ -417,8 +416,7 @@ class SQLite3InstallationStore(InstallationStore, AsyncInstallationStore):
                         """,
                         [self.client_id, enterprise_id or "", team_id, user_id],
                     )
-                    row = cur.fetchone()
-
+                row = cur.fetchone()
                 if row is None:
                     return None
 
@@ -427,7 +425,7 @@ class SQLite3InstallationStore(InstallationStore, AsyncInstallationStore):
                     f"find_installation's query result: {result} (database: {self.database})"
                 )
                 if row and len(row) > 0:
-                    installation = Installation(
+                    return Installation(
                         app_id=row[0],
                         enterprise_id=row[1],
                         enterprise_name=row[2],
@@ -449,7 +447,7 @@ class SQLite3InstallationStore(InstallationStore, AsyncInstallationStore):
                         token_type=row[18],
                         installed_at=row[19],
                     )
-                    return installation
+
                 return None
 
         except Exception as e:  # skipcq: PYL-W0703

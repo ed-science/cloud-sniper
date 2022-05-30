@@ -23,10 +23,10 @@ def _build_request_headers(
     request_headers = {
         "User-Agent": get_user_agent(),
         "Content-Type": "application/json;charset=utf-8",
-    }
-    request_headers.update(default_headers)
+    } | default_headers
+
     if additional_headers:
-        request_headers.update(additional_headers)
+        request_headers |= additional_headers
     return request_headers
 
 

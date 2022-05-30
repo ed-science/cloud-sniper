@@ -13,11 +13,9 @@ def get_bolt_logger(cls: Any) -> Logger:
 def get_bolt_app_logger(app_name: str, cls: object = None) -> Logger:
     if cls and hasattr(cls, "__name__"):
         logger = logging.getLogger(f"{app_name}:{cls.__name__}")
-        logger.disabled = logging.root.disabled
-        logger.level = logging.root.level
-        return logger
     else:
         logger = logging.getLogger(app_name)
-        logger.disabled = logging.root.disabled
-        logger.level = logging.root.level
-        return logger
+
+    logger.level = logging.root.level
+    logger.disabled = logging.root.disabled
+    return logger

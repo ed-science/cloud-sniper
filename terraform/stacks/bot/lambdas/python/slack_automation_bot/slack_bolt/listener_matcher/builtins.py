@@ -94,39 +94,37 @@ def event(
         _verify_message_event_type(constraints["type"])
 
         def func(body: Dict[str, Any]) -> bool:
-            if is_event(body):
-                event = body["event"]
-                if not _matches(constraints["type"], event["type"]):
-                    return False
-                if "subtype" in constraints:
-                    expected_subtype: Union[
-                        str, Sequence[Optional[Union[str, Pattern]]]
-                    ] = constraints["subtype"]
-                    if expected_subtype is None:
-                        # "subtype" in constraints is intentionally None for this pattern
-                        return "subtype" not in event
-                    elif isinstance(expected_subtype, (str, Pattern)):
-                        return "subtype" in event and _matches(
-                            expected_subtype, event["subtype"]
-                        )
-                    elif isinstance(expected_subtype, Sequence):
-                        subtypes: Sequence[
-                            Optional[Union[str, Pattern]]
-                        ] = expected_subtype
-                        for expected in subtypes:
-                            actual: Optional[str] = event.get("subtype")
-                            if expected is None:
-                                if actual is None:
-                                    return True
-                            elif actual is not None and _matches(expected, actual):
+            if not is_event(body):
+                return False
+            event = body["event"]
+            if not _matches(constraints["type"], event["type"]):
+                return False
+            if "subtype" in constraints:
+                expected_subtype: Union[
+                    str, Sequence[Optional[Union[str, Pattern]]]
+                ] = constraints["subtype"]
+                if expected_subtype is None:
+                    # "subtype" in constraints is intentionally None for this pattern
+                    return "subtype" not in event
+                elif isinstance(expected_subtype, (str, Pattern)) or not isinstance(
+                    expected_subtype, Sequence
+                ):
+                    return "subtype" in event and _matches(
+                        expected_subtype, event["subtype"]
+                    )
+                else:
+                    subtypes: Sequence[
+                        Optional[Union[str, Pattern]]
+                    ] = expected_subtype
+                    for expected in subtypes:
+                        actual: Optional[str] = event.get("subtype")
+                        if expected is None:
+                            if actual is None:
                                 return True
-                        return False
-                    else:
-                        return "subtype" in event and _matches(
-                            expected_subtype, event["subtype"]
-                        )
-                return True
-            return False
+                        elif actual is not None and _matches(expected, actual):
+                            return True
+                    return False
+            return True
 
         return build_listener_matcher(func, asyncio)
 

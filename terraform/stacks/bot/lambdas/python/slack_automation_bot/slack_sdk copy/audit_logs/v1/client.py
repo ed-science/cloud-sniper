@@ -59,7 +59,7 @@ class AuditLogsClient:
         self.ssl = ssl
         self.proxy = proxy
         self.base_url = base_url
-        self.default_headers = default_headers if default_headers else {}
+        self.default_headers = default_headers or {}
         self.default_headers["User-Agent"] = get_user_agent(
             user_agent_prefix, user_agent_suffix
         )
@@ -154,7 +154,7 @@ class AuditLogsClient:
             "entity": entity,
         }
         if additional_query_params is not None:
-            query_params.update(additional_query_params)
+            query_params |= additional_query_params
         query_params = {k: v for k, v in query_params.items() if v is not None}
         return self.api_call(
             path="logs",
@@ -210,29 +210,27 @@ class AuditLogsClient:
             )
         try:
             opener: Optional[OpenerDirector] = None
-            # for security (BAN-B310)
-            if url.lower().startswith("http"):
-                req = Request(
-                    method=http_verb,
-                    url=url,
-                    data=body_params.encode("utf-8")
-                    if body_params is not None
-                    else None,
-                    headers=headers,
-                )
-                if self.proxy is not None:
-                    if isinstance(self.proxy, str):
-                        opener = urllib.request.build_opener(
-                            ProxyHandler({"http": self.proxy, "https": self.proxy}),
-                            HTTPSHandler(context=self.ssl),
-                        )
-                    else:
-                        raise SlackRequestError(
-                            f"Invalid proxy detected: {self.proxy} must be a str value"
-                        )
-            else:
+            if not url.lower().startswith("http"):
                 raise SlackRequestError(f"Invalid URL detected: {url}")
 
+            req = Request(
+                method=http_verb,
+                url=url,
+                data=body_params.encode("utf-8")
+                if body_params is not None
+                else None,
+                headers=headers,
+            )
+            if self.proxy is not None:
+                if isinstance(self.proxy, str):
+                    opener = urllib.request.build_opener(
+                        ProxyHandler({"http": self.proxy, "https": self.proxy}),
+                        HTTPSHandler(context=self.ssl),
+                    )
+                else:
+                    raise SlackRequestError(
+                        f"Invalid proxy detected: {self.proxy} must be a str value"
+                    )
             # NOTE: BAN-B310 is already checked above
             resp: Optional[HTTPResponse] = None
             if opener:

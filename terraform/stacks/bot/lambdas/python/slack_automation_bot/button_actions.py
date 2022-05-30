@@ -47,10 +47,7 @@ def open_sg_automation(body, respond):
     log.info(body)
     confirming_username = str(body['user']['username'])
     blocks = body['message']['blocks']
-    block_send = []
-    for section in blocks:
-        if "section" == section["type"]:
-            block_send.append(section)
+    block_send = [section for section in blocks if section["type"] == "section"]
     response_confirm = {
                             "type": "section",
                             "text": {
@@ -71,10 +68,7 @@ def confirmed_event(body, respond):
     log.info(body)
     confirming_username = str(body['user']['username'])
     blocks = body['message']['blocks']
-    block_send = []
-    for section in blocks:
-        if "section" == section["type"]:
-            block_send.append(section)
+    block_send = [section for section in blocks if section["type"] == "section"]
     response_confirm = {
                             "type": "section",
                             "text": {
@@ -101,7 +95,7 @@ def lambda_handler(event, context):
         log.info('response sent')
         return slack_handler.handle(event, context)
     except Exception as e:
-        log.info(" something goes wrong: "+str(e))
+        log.info(f" something goes wrong: {str(e)}")
         return {
             'statusCode': 401
         }

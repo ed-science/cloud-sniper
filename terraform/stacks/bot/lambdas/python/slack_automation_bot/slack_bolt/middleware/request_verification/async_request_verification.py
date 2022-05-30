@@ -22,6 +22,5 @@ class AsyncRequestVerification(RequestVerification, AsyncMiddleware):
         signature = req.headers.get("x-slack-signature", [""])[0]
         if self.verifier.is_valid(body, timestamp, signature):
             return await next()
-        else:
-            self._debug_log_error(signature, timestamp, body)
-            return self._build_error_response()
+        self._debug_log_error(signature, timestamp, body)
+        return self._build_error_response()
